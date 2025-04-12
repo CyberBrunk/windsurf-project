@@ -78,8 +78,8 @@ const ConnectionsScreen: React.FC = () => {
   
   // Handle viewing a connection's details
   const handleViewConnection = (connectionId: string) => {
-    // In a real app, this would navigate to the connection detail screen
-    console.log('View connection:', connectionId);
+    // Navigate to the friend detail screen
+    navigation.navigate('FriendDetail', { friendId: connectionId });
   };
   
   // Render connection item
@@ -145,13 +145,13 @@ const ConnectionsScreen: React.FC = () => {
           style={[styles.tab, activeTab === 'friends' ? styles.activeTab : undefined]}
           onPress={() => setActiveTab('friends')}
         >
-          <Text style={[styles.tabText, activeTab === 'friends' ? styles.activeTabText : undefined]}>Friends</Text>
+          <Text style={activeTab === 'friends' ? styles.activeTabText : styles.tabText}>Friends</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'calendar' ? styles.activeTab : undefined]}
           onPress={() => setActiveTab('calendar')}
         >
-          <Text style={[styles.tabText, activeTab === 'calendar' ? styles.activeTabText : undefined]}>Calendar</Text>
+          <Text style={activeTab === 'calendar' ? styles.activeTabText : styles.tabText}>Calendar</Text>
         </TouchableOpacity>
       </View>
       

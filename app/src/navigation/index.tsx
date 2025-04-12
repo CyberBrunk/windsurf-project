@@ -8,20 +8,17 @@ import AuthNavigator from './AuthNavigator';
 import OnboardingNavigator from './OnboardingNavigator';
 import TabNavigator from './TabNavigator';
 
+// Import screens
+import FriendDetailScreen from '../screens/FriendDetailScreen';
+
 // Import auth context
 import { useAuth } from '../contexts/AuthContext';
 
 // Import storage utilities
 import { getData, STORAGE_KEYS } from '../utils/storage';
 
-// Define the root stack parameter list
-export type RootStackParamList = {
-  Tabs: undefined;
-  Onboarding: undefined;
-  UserDataCollection: undefined;
-  SunCardGeneration: undefined;
-  // We'll add more screens here as we implement them
-};
+// Import types
+import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -81,6 +78,13 @@ export const Navigation = () => {
             }}
           >
             <Stack.Screen name="Tabs" component={TabNavigator} />
+            <Stack.Screen 
+              name="FriendDetail" 
+              component={FriendDetailScreen} 
+              options={{
+                animation: 'slide_from_right',
+              }}
+            />
             {/* We'll add more screens here as we implement them */}
           </Stack.Navigator>
         ) : (
