@@ -132,11 +132,21 @@ const TodayScreen: React.FC = () => {
       outputRange: ['180deg', '0deg']
     });
     
+    // Calculate position and rotation for stacked effect
+    const cardStyles = {
+      zIndex: dailyCards.length - index,
+      transform: [
+        { translateX: index * 10 - 20 },
+        { translateY: index * 5 - 10 },
+        { rotate: `${-5 + index * 3}deg` }
+      ]
+    };
+    
     return (
       <TouchableOpacity 
         key={card.id}
         onPress={() => handleCardFlip(card.id)}
-        style={styles.cardWrapper}
+        style={[styles.cardWrapper, cardStyles]}
         activeOpacity={0.9}
         accessibilityLabel={`${card.displayName} card`}
         accessibilityRole="button"
@@ -144,8 +154,8 @@ const TodayScreen: React.FC = () => {
         <Animated.View style={[
           styles.card,
           { 
-            backgroundColor: card.color,
-            transform: [{ rotateX: flipRotation }],
+            backgroundColor: 'white',
+            transform: [...cardStyles.transform, { rotateX: flipRotation }],
           }
         ]}>
           {flippedCards[card.id] ? (
@@ -226,33 +236,55 @@ const TodayScreen: React.FC = () => {
   // Render main screen
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Today</Text>
-        <Text style={styles.subtitle}>Your daily cards</Text>
-        {user && (
-          <Text style={styles.welcomeText}>Hello, {user.displayName || user.email}</Text>
-        )}
-      </View>
-      
-      <View style={styles.content}>
-        <Text style={styles.cardsTitle}>Your Daily Cards</Text>
-        {loading ? (
-          <ActivityIndicator size="large" color={COLORS.light.primary} />
-        ) : (
-          <View style={styles.cardsContainer}>
-            {dailyCards.map((card, index) => renderCard(card, index))}
+      <SafeAreaView>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View style={styles.moonIndicator}>
+              <View style={styles.moonIcon} />
+            </View>
+            <Text style={styles.moonText}>Moon in Gemini</Text>
           </View>
-        )}
-      </View>
-
-      <TouchableOpacity 
-        style={styles.signOutButton} 
-        onPress={handleSignOut}
-        accessibilityLabel="Sign out"
-        accessibilityRole="button"
-      >
-        <Text style={styles.signOutButtonText}>Sign Out</Text>
-      </TouchableOpacity>
+          
+          <View style={styles.headerRight}>
+            <View style={styles.streakContainer}>
+              <AntDesign name="star" size={18} color="white" />
+              <Text style={styles.streakText}>2</Text>
+            </View>
+            
+            {user && (
+              <TouchableOpacity onPress={() => {}} style={styles.profileButton}>
+                {user.photoURL ? (
+                  <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
+                ) : (
+                  <Avatar 
+                    size={40} 
+                    initials={(user.displayName || user.email || '').substring(0, 2).toUpperCase()} 
+                  />
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+        
+        <View style={styles.greetingContainer}>
+          <Text style={styles.greetingText}>Good Morning</Text>
+        </View>
+        
+        <View style={styles.content}>
+          <Text style={styles.cardsTitle}>Here's today's cards</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color={COLORS.light.primary} />
+          ) : (
+            <View style={styles.cardsContainer}>
+              {dailyCards.map((card, index) => renderCard(card, index))}
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.dateContainer}>
+          <Text style={styles.dateText}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</Text>
+        </View>
+      </SafeAreaView>
       
       {/* Card Detail Wizard Modal */}
       <Modal
@@ -313,30 +345,80 @@ const TodayScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.light.background,
+    backgroundColor: '#f8f4f3',
     padding: SPACING.lg,
   },
   header: {
-    marginTop: 60,
-    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xl,
+  },
+  headerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  title: {
-    fontSize: FONT_SIZES.xxxl,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  moonIndicator: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.sm,
+  },
+  moonIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#008080',
+    borderWidth: 4,
+    borderColor: '#e0e0e0',
+  },
+  moonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: '#008080',
+  },
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#008080',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: SPACING.md,
+  },
+  streakText: {
+    color: 'white',
     fontWeight: 'bold',
-    color: COLORS.light.primary,
-    marginBottom: SPACING.xs,
+    marginLeft: 4,
   },
-  subtitle: {
-    fontSize: FONT_SIZES.md,
-    color: COLORS.light.text,
-    marginBottom: SPACING.sm,
+  profileButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
   },
-  welcomeText: {
-    fontSize: FONT_SIZES.md,
-    color: COLORS.light.secondary,
-    marginTop: SPACING.sm,
-    fontWeight: '500',
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  greetingContainer: {
+    alignItems: 'center',
+    marginBottom: SPACING.xl * 2,
+  },
+  greetingText: {
+    fontSize: FONT_SIZES.xxxl * 1.2,
+    fontWeight: 'bold',
+    color: '#cccccc',
+    textAlign: 'center',
   },
   content: {
     flex: 1,
@@ -350,24 +432,39 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
     textAlign: 'center',
   },
+  dateContainer: {
+    alignItems: 'center',
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.xl,
+  },
+  dateText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.light.text,
+    fontWeight: '500',
+    backgroundColor: 'white',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
   cardsContainer: {
     width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    height: 250,
     alignItems: 'center',
-    padding: SPACING.md,
-    flexWrap: 'wrap',
+    justifyContent: 'center',
+    position: 'relative',
   },
   cardWrapper: {
-    width: '30%',
-    height: 180,
+    position: 'absolute',
+    width: 180,
+    height: 250,
     borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-    margin: SPACING.xs,
+    shadowRadius: 12,
+    elevation: 10,
+    transform: [{ rotate: '-5deg' }],
   },
   card: {
     width: '100%',
@@ -606,7 +703,7 @@ const styles = StyleSheet.create({
   flashcardText: {
     textAlign: 'center',
   },
-  cardHint: {
+  cardHintTop: {
     position: 'absolute',
     top: SPACING.sm,
     left: SPACING.sm,

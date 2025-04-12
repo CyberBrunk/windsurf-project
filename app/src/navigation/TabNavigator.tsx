@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, SPACING, FONT_SIZES } from '../utils/theme';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Import tab screens from index
 import {
@@ -29,14 +30,14 @@ const Tab = createBottomTabNavigator<TabParamList>();
 interface TabBarIconProps {
   focused: boolean;
   name: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 const TabBarIcon: React.FC<TabBarIconProps> = ({ focused, name, icon }) => {
   return (
     <View style={styles.tabIconContainer}>
-      <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>{icon}</Text>
-      <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>{name}</Text>
+      {icon}
+      <Text numberOfLines={1} style={[styles.tabLabel, focused && styles.tabLabelFocused]}>{name}</Text>
     </View>
   );
 };
@@ -52,6 +53,7 @@ const TabNavigator: React.FC = () => {
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: COLORS.light.primary,
         tabBarInactiveTintColor: COLORS.light.textLight,
+        tabBarShowLabel: false,
       }}
     >
       <Tab.Screen 
@@ -59,7 +61,17 @@ const TabNavigator: React.FC = () => {
         component={TodayScreen} 
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} name="Today" icon="📚" />
+            <TabBarIcon 
+              focused={focused} 
+              name="Today" 
+              icon={
+                <Ionicons 
+                  name="today-outline" 
+                  size={24} 
+                  color={focused ? COLORS.light.primary : COLORS.light.textLight} 
+                />
+              } 
+            />
           ),
         }}
       />
@@ -68,7 +80,17 @@ const TabNavigator: React.FC = () => {
         component={ConnectionsScreen} 
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} name="Connect" icon="👥" />
+            <TabBarIcon 
+              focused={focused} 
+              name="Connect" 
+              icon={
+                <Ionicons 
+                  name="people-outline" 
+                  size={24} 
+                  color={focused ? COLORS.light.primary : COLORS.light.textLight} 
+                />
+              } 
+            />
           ),
         }}
       />
@@ -77,7 +99,17 @@ const TabNavigator: React.FC = () => {
         component={ReflectionsScreen} 
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} name="Reflect" icon="📝" />
+            <TabBarIcon 
+              focused={focused} 
+              name="Reflect" 
+              icon={
+                <Ionicons 
+                  name="journal-outline" 
+                  size={24} 
+                  color={focused ? COLORS.light.primary : COLORS.light.textLight} 
+                />
+              } 
+            />
           ),
         }}
       />
@@ -86,7 +118,17 @@ const TabNavigator: React.FC = () => {
         component={PlanetaryPathScreen} 
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} name="Path" icon="🌟" />
+            <TabBarIcon 
+              focused={focused} 
+              name="Path" 
+              icon={
+                <Ionicons 
+                  name="star-outline" 
+                  size={24} 
+                  color={focused ? COLORS.light.primary : COLORS.light.textLight} 
+                />
+              } 
+            />
           ),
         }}
       />
@@ -95,7 +137,17 @@ const TabNavigator: React.FC = () => {
         component={ChatScreen} 
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} name="Chat" icon="💬" />
+            <TabBarIcon 
+              focused={focused} 
+              name="Chat" 
+              icon={
+                <Ionicons 
+                  name="chatbubble-outline" 
+                  size={24} 
+                  color={focused ? COLORS.light.primary : COLORS.light.textLight} 
+                />
+              } 
+            />
           ),
         }}
       />
@@ -115,17 +167,15 @@ const styles = StyleSheet.create({
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  tabIcon: {
-    fontSize: 24,
-    marginBottom: 2,
-  },
-  tabIconFocused: {
-    transform: [{ scale: 1.1 }],
+    width: 65, // Fixed width to prevent wrapping
+    paddingHorizontal: 2,
   },
   tabLabel: {
     fontSize: FONT_SIZES.xs,
     fontWeight: '500',
+    marginTop: 4,
+    textAlign: 'center',
+    width: '100%',
   },
   tabLabelFocused: {
     fontWeight: '700',
