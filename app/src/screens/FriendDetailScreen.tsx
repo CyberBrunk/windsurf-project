@@ -4,6 +4,7 @@ import { COLORS, SPACING, FONT_SIZES } from '../utils/theme';
 import { Text, Avatar } from '../components/ui';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { CardDefinition, getCardDefinition, suitSymbolMap } from '../utils/cardDefinitions';
 
 // Friend data structure
 interface Friend {
@@ -15,8 +16,6 @@ interface Friend {
     suit: string;
     value: string;
     color?: string;
-    name?: string;
-    description?: string;
   }[];
 }
 
@@ -40,14 +39,14 @@ const FriendDetailScreen: React.FC = () => {
   const [friend, setFriend] = useState<Friend | null>(null);
   const [compatibility, setCompatibility] = useState<Compatibility | null>(null);
   const [activeTab, setActiveTab] = useState<'cards' | 'compatibility'>('cards');
+  const [cardDefinitions, setCardDefinitions] = useState<(CardDefinition | undefined)[]>([]);
   
   // Load friend data
   useEffect(() => {
     const loadFriendData = async () => {
       setLoading(true);
       
-      // In a real app, this would be an API call to get the friend's data
-      setTimeout(() => {
+      try {
         // Sample friend data - in a real app, you would filter by friendId
         const friendData: Friend = {
           id: friendId,
@@ -58,52 +57,94 @@ const FriendDetailScreen: React.FC = () => {
             : 'https://randomuser.me/api/portraits/women/68.jpg',
           cards: friendId === '1' 
             ? [
-                { 
-                  suit: 'hearts', 
-                  value: '4', 
-                  color: 'red',
-                  name: 'The Foundation of Love',
-                  description: 'As the Four of Hearts, one of your life paths is about friendship and connection. This card represents empowering foundations that allow the core of your life to flourish. There is an intrinsic understanding of home and family. You have the ability and insight to create a sturdy and long-lasting foundation to make others feel safe.'
-                },
-                { 
-                  suit: 'clubs', 
-                  value: '6', 
-                  color: 'black',
-                  name: 'The Messenger of Truth',
-                  description: 'The Six of Clubs represents communication and truth-seeking. You have a natural ability to convey complex ideas with clarity and conviction. This card suggests a path of intellectual growth and sharing knowledge with others.'
-                },
-                { 
-                  suit: 'clubs', 
-                  value: '10', 
-                  color: 'black',
-                  name: 'The Teacher',
-                  description: 'The Ten of Clubs represents mastery of knowledge and wisdom. This card indicates a life path of continuous learning and teaching others. You have the capacity to absorb complex information and transform it into practical wisdom.'
-                }
+                { suit: 'hearts', value: '4', color: 'red' },
+                { suit: 'clubs', value: '6', color: 'black' },
+                { suit: 'clubs', value: '10', color: 'black' }
               ]
             : [
-                { 
-                  suit: 'hearts', 
-                  value: 'A', 
-                  color: 'red',
-                  name: 'The Loving Heart',
-                  description: 'The Ace of Hearts represents pure love and new emotional beginnings. This card indicates a deep capacity for compassion and forming meaningful connections with others.'
-                },
-                { 
-                  suit: 'spades', 
-                  value: '6', 
-                  color: 'black',
-                  name: 'The Harmonizer',
-                  description: 'The Six of Spades represents balance and harmony through challenges. This card suggests an ability to navigate difficult situations with grace and find peaceful resolutions.'
-                },
-                { 
-                  suit: 'clubs', 
-                  value: '10', 
-                  color: 'black',
-                  name: 'The Scholar',
-                  description: 'The Ten of Clubs represents intellectual achievement and mastery. This card indicates a natural talent for learning and sharing knowledge with others.'
-                }
+                { suit: 'hearts', value: 'A', color: 'red' },
+                { suit: 'spades', value: '6', color: 'black' },
+                { suit: 'clubs', value: '10', color: 'black' }
               ]
         };
+        
+        setFriend(friendData);
+        
+        // Load card definitions directly from our hardcoded data
+        // This is more reliable than the async getCardDefinition approach
+        const cardDefs: CardDefinition[] = [
+          {
+            name: "Four of Hearts",
+            number: "4/52",
+            suit: "Hearts",
+            keywords: ["The Home of the Heart", "Builder of Love", "Emotional Strength"],
+            summary: "Represents foundations of safety and kindness, called the Marriage card. Teaches us to build calm and kind connections.",
+            inLoveMeaning: "You're being asked to make love real—kind, calm, safe, and deeply nourishing.",
+            blessingCard: "Ten of Diamonds",
+            blessingMeaning: "Confidence and satisfaction are ensured when following the heart.",
+            dutyCard: "Four of Diamonds",
+            dutyMeaning: "To build love, you must work on creating stable foundations in all areas of life."
+          },
+          {
+            name: "Six of Clubs",
+            number: "19/52",
+            suit: "Clubs",
+            keywords: ["Mental Balance", "Harmonious Thoughts", "Intellectual Justice"],
+            summary: "Represents balanced thinking and fair communication. This card teaches us to find equilibrium in our mental processes.",
+            inLoveMeaning: "Your thoughts about love need balance. Find the middle path between overthinking and ignoring red flags.",
+            blessingCard: "Three of Hearts",
+            blessingMeaning: "Emotional expansion supports mental balance. Let your feelings inform your thoughts.",
+            dutyCard: "Nine of Clubs",
+            dutyMeaning: "Transform your thinking patterns to achieve greater harmony and fairness."
+          },
+          {
+            name: "Ten of Clubs",
+            number: "23/52",
+            suit: "Clubs",
+            keywords: ["Mental Maturity", "Mind Teacher", "Voice of Influence"],
+            summary: "This Crown Line card is about confident, intentional thought leadership. It teaches that clarity, not perfection, is the goal.",
+            inLoveMeaning: "You're a mental role model. Share your insights and trust your competence.",
+            blessingCard: "Four of Hearts",
+            blessingMeaning: "Emotional grounding makes mental teaching more effective.",
+            dutyCard: "Jack of Hearts",
+            dutyMeaning: "Use your voice for joyful, soulful transformation. Keep it fun but true."
+          }
+        ];
+        
+        // For the second friend, use different cards
+        if (friendId === '2') {
+          cardDefs[0] = {
+            name: "Ace of Hearts",
+            number: "1/52",
+            suit: "Hearts",
+            keywords: ["Angelic Purity", "Creating Love", "New Beginnings"],
+            summary: "The sparkly firestarter of the deck. Represents new loving beginnings, childlike purity, visionary leadership, and creativity.",
+            inLoveMeaning: "This connection is a new emotional beginning. Be playful and authentic, feelings first!",
+            blessingCard: "Three of Hearts",
+            blessingMeaning: "When we are grateful and give love, we can begin anew from a place of light.",
+            dutyCard: "Ace of Clubs",
+            dutyMeaning: "New loving endeavors must be paired with aligned action for full manifestation."
+          };
+          cardDefs[1] = {
+            name: "Six of Spades",
+            number: "45/52",
+            suit: "Spades",
+            keywords: ["Karmic Balance", "Fate & Destiny", "Spiritual Realignment"],
+            summary: "The card of fate. Everything you do ripples outward, demanding honesty, authenticity, and discernment.",
+            inLoveMeaning: "You are the human embodiment of karma. Seek alignment in every realm.",
+            blessingCard: "Two of Spades",
+            blessingMeaning: "Deep connections help cultivate reciprocity and balance.",
+            dutyCard: "Nine of Spades",
+            dutyMeaning: "Burn down what blocks your balance—choose courage and clarity."
+          };
+        }
+        
+        setCardDefinitions(cardDefs);
+      } catch (error) {
+        console.error('Error loading friend data:', error);
+      } finally {
+        setLoading(false);
+      }
         
         // Sample compatibility data
         const compatibilityData: Compatibility = {
@@ -134,33 +175,48 @@ const FriendDetailScreen: React.FC = () => {
               ]
         };
         
-        setFriend(friendData);
         setCompatibility(compatibilityData);
-        setLoading(false);
-      }, 1000); // Simulate network delay
     };
     
     loadFriendData();
   }, [friendId]);
   
   // Render card
-  const renderCard = (card: Friend['cards'][0] | undefined, index: number) => {
-    if (!card) return null;
+  const renderCard = (card: Friend['cards'][0] | undefined, definition: CardDefinition | undefined, index: number) => {
+    if (!card || !definition) {
+      console.log('Missing card or definition:', { card, definition, index });
+      return null;
+    }
+    
     return (
       <View key={index} style={styles.cardContainer}>
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={{ ...styles.cardValue, color: card.color || 'black' }}>{card.value}</Text>
             <Text style={{ ...styles.cardSuit, color: card.color || 'black' }}>
-              {card.suit === 'hearts' ? '♥' : 
-               card.suit === 'diamonds' ? '♦' : 
-               card.suit === 'clubs' ? '♣' : '♠'}
+              {suitSymbolMap[card.suit.charAt(0).toUpperCase() + card.suit.slice(1)] || '♠'}
             </Text>
           </View>
         </View>
         <View style={styles.cardDetails}>
-          <Text style={styles.cardName}>{card.name}</Text>
-          <Text style={styles.cardDescription}>{card.description}</Text>
+          <Text style={styles.cardName}>{definition.name}</Text>
+          <Text style={styles.cardKeywords}>{definition.keywords.join(' • ')}</Text>
+          <Text style={styles.cardDescription}>{definition.summary}</Text>
+          
+          <View style={styles.cardMeaningSection}>
+            <Text style={styles.cardMeaningSectionTitle}>In Love</Text>
+            <Text style={styles.cardMeaningSectionText}>{definition.inLoveMeaning}</Text>
+          </View>
+          
+          <View style={styles.cardMeaningSection}>
+            <Text style={styles.cardMeaningSectionTitle}>Blessing Card: {definition.blessingCard}</Text>
+            <Text style={styles.cardMeaningSectionText}>{definition.blessingMeaning}</Text>
+          </View>
+          
+          <View style={styles.cardMeaningSection}>
+            <Text style={styles.cardMeaningSectionTitle}>Duty Card: {definition.dutyCard}</Text>
+            <Text style={styles.cardMeaningSectionText}>{definition.dutyMeaning}</Text>
+          </View>
         </View>
       </View>
     );
@@ -278,7 +334,7 @@ const FriendDetailScreen: React.FC = () => {
       >
         {activeTab === 'cards' && friend.cards && (
           <View style={styles.cardsContainer}>
-            {friend.cards.map((card, index) => renderCard(card, index))}
+            {friend.cards.map((card, index) => renderCard(card, cardDefinitions[index], index))}
           </View>
         )}
         
@@ -388,9 +444,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.md,
+    width: '100%',
   },
   cardsContainer: {
     paddingBottom: SPACING.xl,
+    width: '100%',
   },
   cardContainer: {
     marginBottom: SPACING.lg,
@@ -402,6 +460,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    width: '100%',
   },
   card: {
     width: 60,
@@ -435,9 +494,33 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     fontWeight: 'bold',
     color: COLORS.light.text,
-    marginBottom: SPACING.xs,
+    marginBottom: 4,
+  },
+  cardKeywords: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.light.textLight,
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
   cardDescription: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.light.text,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  cardMeaningSection: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.light.border,
+  },
+  cardMeaningSectionTitle: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: 'bold',
+    color: COLORS.light.primary,
+    marginBottom: 4,
+  },
+  cardMeaningSectionText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.light.textLight,
     lineHeight: 20,

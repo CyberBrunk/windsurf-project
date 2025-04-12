@@ -203,18 +203,36 @@ const TodayScreen: React.FC = () => {
         );
       case 1:
         return (
-          <View style={styles.wizardContent}>
-            <Text style={styles.wizardTitle}>The Meaning</Text>
+          <ScrollView style={styles.wizardContent}>
+            <Text style={styles.wizardTitle}>{selectedCard.definition?.name || selectedCard.displayName}</Text>
+            {selectedCard.definition?.keywords && (
+              <Text style={styles.wizardKeywords}>{selectedCard.definition.keywords.join(' • ')}</Text>
+            )}
             <Text style={styles.wizardText}>{selectedCard.meaning}</Text>
-          </View>
+          </ScrollView>
         );
       case 2:
         return (
-          <View style={styles.wizardContent}>
-            <Text style={styles.wizardTitle}>Reflection</Text>
-            <Text style={styles.wizardText}>Take a moment to reflect on how this applies to your life right now.</Text>
+          <ScrollView style={styles.wizardContent}>
+            <Text style={styles.wizardTitle}>In Love</Text>
+            <Text style={styles.wizardText}>{selectedCard.definition?.inLoveMeaning || 'Take a moment to reflect on how this card might influence your relationships and emotional connections.'}</Text>
+            
+            {selectedCard.definition?.blessingCard && (
+              <View style={styles.wizardSection}>
+                <Text style={styles.wizardSectionTitle}>Blessing Card: {selectedCard.definition.blessingCard}</Text>
+                <Text style={styles.wizardText}>{selectedCard.definition.blessingMeaning}</Text>
+              </View>
+            )}
+            
+            {selectedCard.definition?.dutyCard && (
+              <View style={styles.wizardSection}>
+                <Text style={styles.wizardSectionTitle}>Duty Card: {selectedCard.definition.dutyCard}</Text>
+                <Text style={styles.wizardText}>{selectedCard.definition.dutyMeaning}</Text>
+              </View>
+            )}
+            
             <Text style={styles.wizardInstructions}>Tap to return to your cards</Text>
-          </View>
+          </ScrollView>
         );
       default:
         return null;
@@ -576,6 +594,28 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  wizardKeywords: {
+    fontSize: FONT_SIZES.sm,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: SPACING.md,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  wizardSection: {
+    marginTop: SPACING.md,
+    marginBottom: SPACING.lg,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+    width: '100%',
+  },
+  wizardSectionTitle: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
   },
   wizardInstructions: {
     position: 'absolute',

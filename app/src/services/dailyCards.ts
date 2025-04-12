@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { v4 as uuidv4 } from 'uuid';
+import { CardDefinition, getCardDefinition, cardValueMap, suitColorMap } from '../utils/cardDefinitions';
 
 // Storage key for daily cards
 const DAILY_CARDS_STORAGE_KEY = 'cardy_daily_cards';
@@ -18,6 +19,7 @@ export interface DailyCard {
   meaning: string; // The card's meaning/interpretation
   displayName: string; // e.g. "Jack of Clubs"
   imageUrl?: string;
+  definition?: CardDefinition; // Card definition from CSV
 }
 
 // Get today's date in ISO format (YYYY-MM-DD)
@@ -47,7 +49,7 @@ const shouldGenerateNewCards = async (): Promise<boolean> => {
 };
 
 // Generate a set of daily cards
-const generateDailyCards = (): DailyCard[] => {
+const generateDailyCards = async (): Promise<DailyCard[]> => {
   const todayString = getTodayDateString();
   
   // Use the date as a seed for "randomness" that will be the same for all users
@@ -117,12 +119,11 @@ const generateDailyCards = (): DailyCard[] => {
     return value;
   };
   
-  // Create the daily cards from the selected playing cards
-  return selectedCards.map((card) => {
+  // Create the daily cards from the selected playing cards with definitions from CSV
+  const dailyCards: DailyCard[] = [];
+  
+  for (const card of selectedCards) {
     const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
-    
-    // Combine suit and value meanings for a more complete interpretation
-    const combinedMeaning = `${cardMeanings[card.value]} ${cardMeanings[card.suit]}`;
     
     // Create a display name like "Jack of Clubs"
     const displayName = `${formatCardValue(card.value)} of ${card.suit.charAt(0).toUpperCase() + card.suit.slice(1)}`;
@@ -131,17 +132,32 @@ const generateDailyCards = (): DailyCard[] => {
     const valueCode = card.value === '10' ? '0' : card.value.charAt(0).toUpperCase();
     const suitCode = card.suit.charAt(0).toUpperCase();
     
-    return {
+    // Get card definition from CSV
+    const cardValue = card.value === 'ace' ? 'A' : 
+                     card.value === 'jack' ? 'J' : 
+                     card.value === 'queen' ? 'Q' : 
+                     card.value === 'king' ? 'K' : card.value;
+    
+    const definition = await getCardDefinition(card.suit, cardValue);
+    
+    // Use definition summary as meaning if available, otherwise fallback to generic meaning
+    const meaning = definition?.summary || 
+      `${cardMeanings[card.value]} ${cardMeanings[card.suit]}`;
+    
+    dailyCards.push({
       id: uuidv4(),
       date: todayString,
       suit: card.suit,
       value: card.value,
       color: isRed ? '#E53935' : '#212121', // Red for hearts/diamonds, black for clubs/spades
-      meaning: combinedMeaning,
+      meaning: meaning,
       displayName,
+      definition,
       imageUrl: `https://deckofcardsapi.com/static/img/${valueCode}${suitCode}.png`
-    };
-  });
+    });
+  }
+  
+  return dailyCards;
 };
 
 // Get today's cards - generates new ones if needed
@@ -151,7 +167,7 @@ export const getTodayCards = async (): Promise<DailyCard[]> => {
     
     if (needNewCards) {
       // Generate new cards for today
-      const newCards = generateDailyCards();
+      const newCards = await generateDailyCards();
       
       // Store the cards
       await AsyncStorage.setItem(DAILY_CARDS_STORAGE_KEY, JSON.stringify(newCards));
@@ -175,7 +191,7 @@ export const getTodayCards = async (): Promise<DailyCard[]> => {
 export const refreshDailyCards = async (): Promise<DailyCard[]> => {
   try {
     // Generate new cards
-    const newCards = generateDailyCards();
+    const newCards = await generateDailyCards();
     
     // Store the cards
     await AsyncStorage.setItem(DAILY_CARDS_STORAGE_KEY, JSON.stringify(newCards));
