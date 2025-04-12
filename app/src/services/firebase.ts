@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, initializeAuth } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
@@ -16,9 +16,8 @@ const app = !getApps().length ? initializeApp(FIREBASE_CONFIG) : getApp();
  */
 const auth = getAuth(app);
 
-// We're using the default persistence for simplicity
-// Note: For better persistence in React Native, you might want to explore
-// other options in a production app
+// Note: For React Native, we'll need to set up persistence manually in the AuthContext
+// This will be done by implementing onAuthStateChanged and storing the user in AsyncStorage
 
 /**
  * Initialize Firestore
