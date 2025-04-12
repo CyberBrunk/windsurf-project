@@ -1,64 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { COLORS, SPACING } from '../../utils/theme';
-import { Card, Text, Button, Avatar } from '../../components/ui';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Animated, Easing, Modal, Dimensions, Image } from 'react-native';
+import { COLORS, SPACING, FONT_SIZES } from '../../utils/theme';
+import { Text, Avatar } from '../../components/ui';
 import { useAuth } from '../../contexts/AuthContext';
-import localData from '../../services/localData';
-import { Deck, Flashcard } from '../../types';
+import { AntDesign } from '@expo/vector-icons';
+
+// Import DailyCard type and service
+import { DailyCard, getTodayCards } from '../../services/dailyCards';
 
 /**
  * TodayScreen component - Main screen showing today's cards and activities
  */
 const TodayScreen: React.FC = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const [flippedCards, setFlippedCards] = useState<{[key: string]: boolean}>({});
+  const [selectedCard, setSelectedCard] = useState<DailyCard | null>(null);
+  const [wizardStep, setWizardStep] = useState(0);
+  const [wizardVisible, setWizardVisible] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<{ cards: number; streak: number; accuracy: number }>({ 
-    cards: 0, 
-    streak: 0, 
-    accuracy: 0 
-  });
-  const [dueCards, setDueCards] = useState<Flashcard[]>([]);
-  const [decks, setDecks] = useState<Deck[]>([]);
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [showingAnswer, setShowingAnswer] = useState(false);
-  const [reviewMode, setReviewMode] = useState(false);
   
-  // Initialize local data and load user stats
+  // Animation values for each card
+  const flipAnimations = useRef<{[key: string]: Animated.Value}>({});
+  
+  // State for daily cards
+  const [dailyCards, setDailyCards] = useState<DailyCard[]>([]);
+  
+  // Fetch daily cards when component mounts
   useEffect(() => {
-    const initData = async () => {
-      if (user) {
-        try {
-          // Initialize local storage with sample data if needed
-          await localData.initializeLocalStorage(user.id);
-          
-          // Load user stats
-          const userStats = await localData.getUserStats(user.id);
-          if (userStats) {
-            setStats({
-              cards: userStats.totalCards,
-              streak: userStats.streak,
-              accuracy: userStats.accuracy
-            });
-          }
-          
-          // Load due cards
-          const cards = await localData.getDueFlashcards(user.id);
-          setDueCards(cards);
-          
-          // Load user decks
-          const userDecks = await localData.getUserDecks(user.id);
-          setDecks(userDecks);
-          
-          setLoading(false);
-        } catch (error) {
-          console.error('Error loading data:', error);
-          setLoading(false);
-        }
+    const fetchDailyCards = async () => {
+      try {
+        setLoading(true);
+        const cards = await getTodayCards();
+        setDailyCards(cards);
+        
+        // Create animation values for each card
+        cards.forEach(card => {
+          flipAnimations.current[card.id] = new Animated.Value(0);
+        });
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching daily cards:', error);
+        setLoading(false);
+        Alert.alert('Error', 'Failed to load your daily cards. Please try again.');
       }
     };
     
-    initData();
-  }, [user]);
+    fetchDailyCards();
+  }, []);
   
   // Get user initials for avatar
   const getUserInitials = () => {
@@ -75,192 +64,249 @@ const TodayScreen: React.FC = () => {
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   };
   
-  // Start review session
-  const handleStartReview = () => {
-    setCurrentCardIndex(0);
-    setShowingAnswer(false);
-    setReviewMode(true);
+  // Handle card flip
+  const handleCardFlip = (cardId: string) => {
+    // If card is already flipped, open the wizard
+    if (flippedCards[cardId]) {
+      const card = dailyCards.find(c => c.id === cardId);
+      if (card) {
+        setSelectedCard(card);
+        setWizardStep(0);
+        setWizardVisible(true);
+      }
+      return;
+    }
+    
+    // Flip animation
+    Animated.timing(flipAnimations.current[cardId], {
+      toValue: 1,
+      duration: 500,
+      easing: Easing.out(Easing.back(1.5)),
+      useNativeDriver: true,
+    }).start(() => {
+      setFlippedCards(prev => ({
+        ...prev,
+        [cardId]: true
+      }));
+    });
   };
   
-  // End review session
-  const handleEndReview = () => {
-    setReviewMode(false);
+  // Close wizard and return to cards
+  const handleCloseWizard = () => {
+    setWizardVisible(false);
+    setSelectedCard(null);
+    setWizardStep(0);
   };
   
-  // Flip card to show answer
-  const handleShowAnswer = () => {
-    setShowingAnswer(true);
-  };
-  
-  // Handle card review result
-  const handleCardResult = (result: 'correct' | 'incorrect') => {
-    // In a real app, we would update the card's review status and schedule
-    // For now, just move to the next card
-    if (currentCardIndex < dueCards.length - 1) {
-      setCurrentCardIndex(currentCardIndex + 1);
-      setShowingAnswer(false);
+  // Navigate to next wizard step
+  const handleNextStep = () => {
+    if (wizardStep < 2) {
+      setWizardStep(wizardStep + 1);
     } else {
-      // End of review
-      setReviewMode(false);
+      handleCloseWizard();
     }
   };
   
-  // Create a new deck
-  const handleCreateDeck = () => {
-    // This would open a modal to create a new deck
-    // For now, just log to console
-    console.log('Create new deck');
+  // Navigate to previous wizard step
+  const handlePrevStep = () => {
+    if (wizardStep > 0) {
+      setWizardStep(wizardStep - 1);
+    } else {
+      handleCloseWizard();
+    }
   };
   
-  // Render review mode
-  if (reviewMode && dueCards.length > 0) {
-    const currentCard = dueCards[currentCardIndex];
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to sign out. Please try again.');
+    }
+  };
+  
+  // Render card with flip animation
+  const renderCard = (card: DailyCard, index: number) => {
+    // Interpolate the flip animation
+    const flipRotation = flipAnimations.current[card.id].interpolate({
+      inputRange: [0, 1],
+      outputRange: ['180deg', '0deg']
+    });
     
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.reviewHeader}>
-          <TouchableOpacity onPress={handleEndReview} style={styles.closeButton}>
-            <Text variant="button" color="primary">Close</Text>
-          </TouchableOpacity>
-          <Text variant="h4" color="primary">
-            Card {currentCardIndex + 1} of {dueCards.length}
-          </Text>
-        </View>
-        
-        <View style={styles.reviewContent}>
-          <Card variant="elevated" style={styles.flashcard}>
-            <Text variant="h3" color="primary" style={styles.flashcardText}>
-              {showingAnswer ? currentCard.back : currentCard.front}
-            </Text>
-            
-            <Text variant="caption" color="textLight" style={styles.cardHint}>
-              {showingAnswer ? 'Answer' : 'Question'}
-            </Text>
-          </Card>
-          
-          {!showingAnswer ? (
-            <Button 
-              title="Show Answer" 
-              onPress={handleShowAnswer} 
-              variant="primary" 
-              size="large" 
-              style={styles.reviewButton}
-            />
+      <TouchableOpacity 
+        key={card.id}
+        onPress={() => handleCardFlip(card.id)}
+        style={styles.cardWrapper}
+        activeOpacity={0.9}
+        accessibilityLabel={`${card.displayName} card`}
+        accessibilityRole="button"
+      >
+        <Animated.View style={[
+          styles.card,
+          { 
+            backgroundColor: card.color,
+            transform: [{ rotateX: flipRotation }],
+          }
+        ]}>
+          {flippedCards[card.id] ? (
+            <View style={styles.cardFront}>
+              {card.imageUrl && (
+                <Image 
+                  source={{ uri: card.imageUrl }} 
+                  style={styles.cardImage} 
+                  resizeMode="contain"
+                />
+              )}
+            </View>
           ) : (
-            <View style={styles.resultButtons}>
-              <Button 
-                title="Incorrect" 
-                onPress={() => handleCardResult('incorrect')} 
-                variant="outline" 
-                size="medium" 
-                style={{...styles.resultButton, ...styles.incorrectButton}}
-              />
-              <Button 
-                title="Correct" 
-                onPress={() => handleCardResult('correct')} 
-                variant="primary" 
-                size="medium" 
-                style={{...styles.resultButton, ...styles.correctButton}}
+            <View style={styles.cardBack}>
+              <Image 
+                source={require('../../assets/card-back.png')} 
+                style={styles.cardImage} 
+                resizeMode="contain"
               />
             </View>
           )}
-        </View>
-      </SafeAreaView>
+        </Animated.View>
+      </TouchableOpacity>
     );
-  }
+  };
+  
+  // Render wizard content based on current step
+  const renderWizardContent = () => {
+    if (!selectedCard) return null;
+    
+    switch (wizardStep) {
+      case 0:
+        return (
+          <View style={styles.wizardContent}>
+            <Text style={styles.wizardTitle}>{selectedCard.displayName}</Text>
+            {selectedCard.imageUrl && (
+              <Image 
+                source={{ uri: selectedCard.imageUrl }} 
+                style={styles.wizardCardImage} 
+                resizeMode="contain"
+              />
+            )}
+            <Text style={styles.wizardInstructions}>Swipe or tap the arrow to continue</Text>
+          </View>
+        );
+      case 1:
+        return (
+          <View style={styles.wizardContent}>
+            <Text style={styles.wizardTitle}>The Meaning</Text>
+            <Text style={styles.wizardText}>{selectedCard.meaning}</Text>
+          </View>
+        );
+      case 2:
+        return (
+          <View style={styles.wizardContent}>
+            <Text style={styles.wizardTitle}>Reflection</Text>
+            <Text style={styles.wizardText}>Take a moment to reflect on how this applies to your life right now.</Text>
+            <Text style={styles.wizardInstructions}>Tap to return to your cards</Text>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+  
+
   
   // Render loading state
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color={COLORS.light.primary} />
-        <Text variant="body" color="textLight" style={styles.loadingText}>
-          Loading your cards...
-        </Text>
+        <Text style={styles.loadingText}>Loading...</Text>
       </SafeAreaView>
     );
   }
   
   // Render main screen
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View>
-              <Text variant="h1" color="primary">Today</Text>
-              <Text variant="body" color="textLight">Your daily cards and activities</Text>
-            </View>
-            <Avatar size={50} initials={getUserInitials()} />
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Today</Text>
+        <Text style={styles.subtitle}>Your daily cards</Text>
+        {user && (
+          <Text style={styles.welcomeText}>Hello, {user.displayName || user.email}</Text>
+        )}
+      </View>
+      
+      <View style={styles.content}>
+        <Text style={styles.cardsTitle}>Your Daily Cards</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color={COLORS.light.primary} />
+        ) : (
+          <View style={styles.cardsContainer}>
+            {dailyCards.map((card, index) => renderCard(card, index))}
           </View>
-          
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text variant="h3" color="primary">{dueCards.length}</Text>
-              <Text variant="caption" color="textLight">Cards Due</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text variant="h3" color="success">{stats.streak}</Text>
-              <Text variant="caption" color="textLight">Day Streak</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text variant="h3" color="secondary">{stats.accuracy}%</Text>
-              <Text variant="caption" color="textLight">Accuracy</Text>
+        )}
+      </View>
+
+      <TouchableOpacity 
+        style={styles.signOutButton} 
+        onPress={handleSignOut}
+        accessibilityLabel="Sign out"
+        accessibilityRole="button"
+      >
+        <Text style={styles.signOutButtonText}>Sign Out</Text>
+      </TouchableOpacity>
+      
+      {/* Card Detail Wizard Modal */}
+      <Modal
+        visible={wizardVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCloseWizard}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.wizardContainer, { backgroundColor: selectedCard?.color || COLORS.light.card }]}>
+            <TouchableOpacity 
+              style={styles.wizardCloseButton}
+              onPress={handleCloseWizard}
+              accessibilityLabel="Close wizard"
+              accessibilityRole="button"
+            >
+              <AntDesign name="close" size={24} color="white" />
+            </TouchableOpacity>
+            
+            {renderWizardContent()}
+            
+            <View style={styles.wizardNavigation}>
+              <TouchableOpacity 
+                style={[styles.navButton, wizardStep === 0 && styles.navButtonDisabled]}
+                onPress={handlePrevStep}
+                disabled={wizardStep === 0}
+                accessibilityLabel="Previous step"
+                accessibilityRole="button"
+              >
+                <AntDesign name="left" size={24} color={wizardStep === 0 ? '#ffffff80' : 'white'} />
+              </TouchableOpacity>
+              
+              <View style={styles.stepIndicators}>
+                {[0, 1, 2].map(step => (
+                  <View 
+                    key={step}
+                    style={[styles.stepDot, wizardStep === step && styles.stepDotActive]}
+                  />
+                ))}
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.navButton}
+                onPress={handleNextStep}
+                accessibilityLabel={wizardStep === 2 ? "Finish" : "Next step"}
+                accessibilityRole="button"
+              >
+                <AntDesign name="right" size={24} color="white" />
+              </TouchableOpacity>
             </View>
           </View>
         </View>
-        
-        <View style={styles.content}>
-          <Card variant="elevated" style={styles.cardContainer}>
-            <Text variant="h4" color="primary">Daily Cards</Text>
-            <Text variant="body" style={styles.cardText}>
-              {dueCards.length > 0 
-                ? `You have ${dueCards.length} cards due for review today. Complete your reviews to maintain your streak!`
-                : 'You have no cards due for review today. Great job staying on top of your studies!'}
-            </Text>
-            {dueCards.length > 0 && (
-              <Button 
-                title="Start Review" 
-                onPress={handleStartReview} 
-                variant="primary" 
-                size="medium" 
-                style={styles.button}
-              />
-            )}
-          </Card>
-          
-          <Card variant="elevated" style={styles.cardContainer}>
-            <Text variant="h4" color="primary">Your Decks</Text>
-            <Text variant="body" style={styles.cardText}>
-              {decks.length > 0 
-                ? `You have ${decks.length} decks with a total of ${stats.cards} cards.`
-                : 'You don\'t have any decks yet. Create your first deck to get started!'}
-            </Text>
-            <Button 
-              title="View Decks" 
-              onPress={() => {}} 
-              variant="outline" 
-              size="medium" 
-              style={styles.button}
-            />
-          </Card>
-          
-          <Card variant="outlined" style={styles.cardContainer}>
-            <Text variant="h4" color="primary">Create New Deck</Text>
-            <Text variant="body" style={styles.cardText}>
-              Add a new deck to organize your flashcards by topic or subject.
-            </Text>
-            <Button 
-              title="Create Deck" 
-              onPress={handleCreateDeck} 
-              variant="secondary" 
-              size="medium" 
-              style={styles.button}
-            />
-          </Card>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      </Modal>
+    </View>
   );
 };
 
@@ -268,14 +314,236 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.light.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
     padding: SPACING.lg,
   },
   header: {
-    marginTop: SPACING.xl,
+    marginTop: 60,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: FONT_SIZES.xxxl,
+    fontWeight: 'bold',
+    color: COLORS.light.primary,
+    marginBottom: SPACING.xs,
+  },
+  subtitle: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.light.text,
+    marginBottom: SPACING.sm,
+  },
+  welcomeText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.light.secondary,
+    marginTop: SPACING.sm,
+    fontWeight: '500',
+  },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardsTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: '600',
+    color: COLORS.light.text,
     marginBottom: SPACING.xl,
+    textAlign: 'center',
+  },
+  cardsContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    padding: SPACING.md,
+    flexWrap: 'wrap',
+  },
+  cardWrapper: {
+    width: '30%',
+    height: 180,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    margin: SPACING.xs,
+  },
+  card: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backfaceVisibility: 'hidden',
+    backgroundColor: 'white',
+  },
+  cardFront: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.sm,
+    backgroundColor: 'white',
+  },
+  cardBack: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    transform: [{ rotateX: '180deg' }],
+  },
+  cardTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: SPACING.xs,
+    textAlign: 'center',
+  },
+  cardDescription: {
+    fontSize: FONT_SIZES.md,
+    color: 'white',
+    textAlign: 'center',
+    opacity: 0.9,
+    marginTop: SPACING.xs,
+  },
+  cardHint: {
+    position: 'absolute',
+    bottom: SPACING.md,
+    fontSize: FONT_SIZES.sm,
+    color: 'white',
+    opacity: 0.7,
+  },
+  cardBackText: {
+    fontSize: 60,
+    fontWeight: 'bold',
+    color: COLORS.light.primary,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wizardContainer: {
+    width: '90%',
+    height: '70%',
+    borderRadius: 20,
+    padding: SPACING.xl,
+    justifyContent: 'space-between',
+  },
+  wizardCloseButton: {
+    position: 'absolute',
+    top: SPACING.md,
+    right: SPACING.md,
+    zIndex: 10,
+    padding: SPACING.sm,
+  },
+  wizardContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+  },
+  wizardCardImage: {
+    width: 120,
+    height: 180,
+    marginBottom: SPACING.md,
+  },
+  cardImage: {
+    width: 80,
+    height: 120,
+    marginVertical: SPACING.sm,
+  },
+  wizardTitle: {
+    fontSize: FONT_SIZES.xl,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: SPACING.md,
+    textAlign: 'center',
+  },
+  wizardDescription: {
+    fontSize: FONT_SIZES.lg,
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+  },
+  wizardText: {
+    fontSize: FONT_SIZES.md,
+    color: 'white',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  wizardInstructions: {
+    position: 'absolute',
+    bottom: 0,
+    fontSize: FONT_SIZES.sm,
+    color: 'white',
+    opacity: 0.7,
+    textAlign: 'center',
+  },
+  wizardNavigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+  },
+  navButton: {
+    padding: SPACING.sm,
+  },
+  navButtonDisabled: {
+    opacity: 0.5,
+  },
+  stepIndicators: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    marginHorizontal: 4,
+  },
+  stepDotActive: {
+    backgroundColor: 'white',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: SPACING.md,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.light.textLight,
+  },
+  signOutButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  signOutButtonText: {
+    color: COLORS.light.error,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+  },
+  // Additional styles
+  scrollContent: {
+    flexGrow: 1,
+    padding: SPACING.lg,
   },
   headerTop: {
     flexDirection: 'row',
@@ -300,11 +568,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  content: {
-    flex: 1,
-    gap: SPACING.lg,
-  },
-  cardContainer: {
+  cardContainerMargin: {
     marginBottom: SPACING.md,
   },
   cardText: {
@@ -313,13 +577,6 @@ const styles = StyleSheet.create({
   button: {
     marginTop: SPACING.sm,
     alignSelf: 'flex-start',
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: SPACING.md,
   },
   reviewHeader: {
     flexDirection: 'row',
