@@ -1,0 +1,63 @@
+Cartomancy App – Simplified PRD for Expo + AI Dev Tool
+📱 Platform
+- Framework: React Native
+- Tooling: Expo Managed Workflow
+- Platforms: iOS (13+), Android (9+)
+
+💡 App Overview
+A spiritual tool using standard set of playing cards and astrology for personalized daily guidance, friend compatibility, journaling, and AI divination.
+
+🧑‍🎤 User Flow (5 Main Tabs)
+Today
+- 3 daily playing cards (same for all users)
+-Tap-through full-screen carousel with card meanings
+- Share to friends or social
+
+Connections
+- Friend list with profile view
+- View each friend’s 3 Sun Cards
+- Optional compatibility view ($0.99 or Premium)
+
+Reflections
+- Journal entries (rich text, attach cards/photos/moods)
+- Privacy control (Private / Friends / Public)
+- Filter/search entries
+
+Planetary Path
+- Shows user's 3 Sun Cards
+- 11 celestial bodies with associated cards
+- Swipeable carousel of planets
+
+
+Chat
+- AI chat with "Katie The Card Lady"
+- Personalized advice using user's Sun Cards & recent readings
+- Free: 5 messages/day | Premium: Unlimited
+
+🔐 User Auth & Onboarding
+- Firebase Auth (email + social)
+- Enter name, DOB, birth time → auto-generate:
+- Sun cards (Inner Child, Chosen Purpose, Highest Self)
+- In-app onboarding that walks through your Sun Cards definitions
+
+💸 Monetization
+Free Tier
+- Daily cards
+- 5 AI messages/day
+
+Premium ($4.99/month)
+- Full compatibility + personalized guidance
+- Unlimited AI chat + reversed meanings
+- No ads
+
+In-App Purchases
+- $0.99 one-time friend card compatibility comparison
+- Card themes/spreads
+
+🛠️ Backend (Firebase Stack)
+- Auth: Firebase Auth
+- Database: Firestore
+- Server Logic: Cloud Functions
+- Storage: Cloud Storage (photos, journal images)
+- Analytics: Firebase Analytics
+

@@ -1,0 +1,91 @@
+{
+  "meta": {
+    "generatedAt": "2025-04-12T14:30:42.227Z",
+    "tasksAnalyzed": 10,
+    "thresholdScore": 5,
+    "projectName": "Your Project Name",
+    "usedResearch": false
+  },
+  "complexityAnalysis": [
+    {
+      "taskId": 1,
+      "taskTitle": "Project Setup and Firebase Integration",
+      "complexityScore": 6,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Break down the Firebase integration process into detailed subtasks covering project initialization, individual Firebase service configurations, and environment setup, focusing on potential configuration issues across platforms.",
+      "reasoning": "Project setup combines standard Expo initialization with multi-service Firebase integration, requiring platform-specific configurations. While conceptually straightforward, proper configuration of multiple Firebase services across environments introduces moderate complexity."
+    },
+    {
+      "taskId": 2,
+      "taskTitle": "Authentication and User Onboarding Flow",
+      "complexityScore": 8,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Create detailed subtasks for implementing each authentication method, user data collection flow, and Sun Card generation algorithm, with focus on security, validation, and user experience.",
+      "reasoning": "This task involves multiple authentication methods (email, Google, Apple), complex form validation, and algorithmic logic for Sun Card generation. The multi-step flow with data persistence and validation logic significantly increases complexity."
+    },
+    {
+      "taskId": 3,
+      "taskTitle": "Tab Navigation and Core UI Components",
+      "complexityScore": 7,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Detail the subtasks for creating each reusable UI component with specifications for animations, state management, and responsive design considerations.",
+      "reasoning": "Creating a comprehensive component library with animations, responsive layouts, and consistent theming involves significant design and implementation challenges. The components need to work across multiple screens and handle various interaction patterns."
+    },
+    {
+      "taskId": 4,
+      "taskTitle": "Today Tab - Daily Card Generation and Display",
+      "complexityScore": 7,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Break down the implementation of the Today tab into subtasks covering backend card generation, frontend display, caching mechanisms, and sharing functionality with detailed technical considerations.",
+      "reasoning": "This feature combines cloud functions for daily content generation, complex UI with animations, local caching, and integration with device sharing capabilities. The combination of backend and frontend work with synchronization requirements increases complexity."
+    },
+    {
+      "taskId": 5,
+      "taskTitle": "Planetary Path Tab Implementation",
+      "complexityScore": 8,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Create detailed subtasks for implementing the astronomical algorithms, UI components, and educational content for the Planetary Path feature, focusing on accuracy and performance.",
+      "reasoning": "This task requires complex astronomical calculations to associate cards with celestial bodies, combined with advanced UI implementations (carousel, animations). The algorithmic complexity and educational content creation make this a challenging feature."
+    },
+    {
+      "taskId": 6,
+      "taskTitle": "Connections Tab and Friend System",
+      "complexityScore": 9,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Detail the subtasks for implementing the social features including friend data structures, search functionality, compatibility algorithms, and in-app purchase integration.",
+      "reasoning": "This feature combines social networking functionality (friend requests, profiles) with complex compatibility algorithms and monetization through IAPs. The combination of social features, algorithms, and payment processing creates high complexity."
+    },
+    {
+      "taskId": 7,
+      "taskTitle": "Reflections Tab with Journaling Features",
+      "complexityScore": 8,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Break down the journaling feature implementation into subtasks covering rich text editing, media handling, storage architecture, search functionality, and offline capabilities.",
+      "reasoning": "Creating a full-featured journaling system with rich text, media attachments, search, and offline sync presents significant technical challenges. The complexity is increased by privacy controls and the need for efficient storage and retrieval."
+    },
+    {
+      "taskId": 8,
+      "taskTitle": "AI Chat Implementation with 'Katie The Card Lady'",
+      "complexityScore": 9,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Detail the subtasks for implementing the AI chat feature, including AI integration, context-aware prompting, message limiting logic, and secure backend processing.",
+      "reasoning": "Implementing an AI assistant that incorporates personalized context (user's cards, readings) requires sophisticated prompt engineering and backend processing. Combined with message limits, storage requirements, and UI considerations, this is one of the most complex features."
+    },
+    {
+      "taskId": 9,
+      "taskTitle": "Premium Subscription Implementation",
+      "complexityScore": 8,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Break down the implementation of the subscription system into subtasks covering platform-specific store configurations, purchase validation, feature gating, and subscription management.",
+      "reasoning": "Implementing a subscription system requires integration with platform-specific payment systems, server-side validation, and feature access control throughout the app. The cross-platform nature and security requirements add significant complexity."
+    },
+    {
+      "taskId": 10,
+      "taskTitle": "Analytics, Error Handling, and Final Polishing",
+      "complexityScore": 7,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Detail the subtasks for implementing comprehensive analytics, error handling systems, performance optimizations, and final UI refinements across the application.",
+      "reasoning": "This task involves implementing analytics across all user actions, creating a robust error handling system, and polishing the entire application UI. The broad scope across the entire app and technical nature of performance optimization create moderate to high complexity."
+    }
+  ]
+}
