@@ -16,7 +16,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 // Define the auth stack parameter list until we can properly import it
 export type AuthStackParamList = {
-  Login: undefined;
+  Login: { email?: string } | undefined;
   Register: undefined;
   ForgotPassword: undefined;
 };
@@ -26,8 +26,8 @@ import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../../utils/theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-const LoginScreen: React.FC<Props> = ({ navigation }) => {
-  const [email, setEmail] = useState('');
+const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
+  const [email, setEmail] = useState(route.params?.email || '');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { clearError } = useAuth();

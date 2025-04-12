@@ -11,6 +11,16 @@ export interface User {
   createdAt: Date | string;
   updatedAt: Date | string;
   isPremium: boolean;
+  
+  // Sun Card data
+  sunCard?: {
+    name: string;
+    sign: string;
+    element: string;
+    description: string;
+    traits: string[];
+    compatibility: string[];
+  };
 }
 
 // Flashcard related types

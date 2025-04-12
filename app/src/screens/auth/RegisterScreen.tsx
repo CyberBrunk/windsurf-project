@@ -9,14 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert
+  Alert,
+  Modal
 } from 'react-native';
 import SocialAuthButtons from '../../components/auth/SocialAuthButtons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from './LoginScreen';
-import { registerWithEmail } from '../../services/auth';
+import { registerWithEmail, createUserProfile } from '../../services/auth';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../../utils/theme';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
@@ -24,6 +26,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [birthTime, setBirthTime] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { clearError } = useAuth();
 
@@ -35,6 +41,30 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const validatePassword = (password: string) => {
     // Password must be at least 8 characters long
     return password.length >= 8;
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setDateOfBirth(selectedDate);
+    }
+  };
+
+  const handleTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      setBirthTime(selectedTime);
+    }
+  };
+
+  const formatDate = (date: Date | null): string => {
+    if (!date) return 'Select date';
+    return date.toLocaleDateString();
+  };
+
+  const formatTime = (time: Date | null): string => {
+    if (!time) return 'Select time';
+    return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   const handleRegister = async () => {
@@ -62,16 +92,47 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
+    if (!dateOfBirth) {
+      Alert.alert('Error', 'Please select your date of birth');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await registerWithEmail(email, password);
+      const userCredential = await registerWithEmail(email, password);
+      
+      // Format date and time for Firestore
+      const formattedDate = dateOfBirth.toISOString().split('T')[0];
+      const formattedTime = birthTime ? birthTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined;
+      
+      // Update user profile with birth date and time
+      // Use type assertion to access the Firebase user object
+      const firebaseUser = userCredential as any;
+      await createUserProfile(firebaseUser.user, formattedDate, formattedTime);
+      
       // Navigation will be handled by the auth state change in AuthContext
     } catch (error: any) {
       let errorMessage = 'Failed to create account';
       
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'Email address is already in use';
+        // Show alert with option to navigate to login screen
+        Alert.alert(
+          'Account Already Exists',
+          'An account with this email already exists. Would you like to log in instead?',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            },
+            {
+              text: 'Log In',
+              onPress: () => navigation.navigate('Login', { email })
+            }
+          ]
+        );
+        setIsLoading(false);
+        return;
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Invalid email address';
       } else if (error.code === 'auth/weak-password') {
@@ -149,6 +210,47 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             />
           </View>
 
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Date of Birth</Text>
+            <TouchableOpacity 
+              style={styles.datePickerButton} 
+              onPress={() => setShowDatePicker(true)}
+              accessibilityLabel="Select date of birth"
+              accessibilityRole="button"
+            >
+              <Text style={styles.datePickerText}>{formatDate(dateOfBirth)}</Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={dateOfBirth || new Date()}
+                mode="date"
+                display="default"
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+            )}
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Birth Time (Optional)</Text>
+            <TouchableOpacity 
+              style={styles.datePickerButton} 
+              onPress={() => setShowTimePicker(true)}
+              accessibilityLabel="Select birth time"
+              accessibilityRole="button"
+            >
+              <Text style={styles.datePickerText}>{formatTime(birthTime)}</Text>
+            </TouchableOpacity>
+            {showTimePicker && (
+              <DateTimePicker
+                value={birthTime || new Date()}
+                mode="time"
+                display="default"
+                onChange={handleTimeChange}
+              />
+            )}
+          </View>
+
           <TouchableOpacity 
             style={styles.registerButton} 
             onPress={handleRegister}
@@ -191,12 +293,22 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: SPACING.lg,
+    padding: SPACING.md,
   },
   header: {
-    marginTop: SPACING.xl,
     marginBottom: SPACING.xl,
     alignItems: 'center',
+  },
+  datePickerButton: {
+    backgroundColor: COLORS.light.card,
+    borderRadius: BORDER_RADIUS.sm,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.light.border,
+  },
+  datePickerText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.light.text,
   },
   title: {
     fontSize: FONT_SIZES.xxxl,

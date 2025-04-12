@@ -1,9 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { 
-  getAuth, 
-  initializeAuth
-} from 'firebase/auth';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
@@ -20,11 +16,9 @@ const app = !getApps().length ? initializeApp(FIREBASE_CONFIG) : getApp();
  */
 const auth = getAuth(app);
 
-// Note: For React Native persistence, you would typically use:
-// const auth = initializeAuth(app, {
-//   persistence: indexedDBLocalPersistence
-// });
-// But we're using the default persistence for now
+// We're using the default persistence for simplicity
+// Note: For better persistence in React Native, you might want to explore
+// other options in a production app
 
 /**
  * Initialize Firestore

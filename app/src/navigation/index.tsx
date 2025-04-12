@@ -3,12 +3,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
-// Import screens
-import HomeScreen from '../screens/HomeScreen';
-
 // Import navigators
 import AuthNavigator from './AuthNavigator';
 import OnboardingNavigator from './OnboardingNavigator';
+import TabNavigator from './TabNavigator';
 
 // Import auth context
 import { useAuth } from '../contexts/AuthContext';
@@ -18,7 +16,7 @@ import { getData, STORAGE_KEYS } from '../utils/storage';
 
 // Define the root stack parameter list
 export type RootStackParamList = {
-  Home: undefined;
+  Tabs: undefined;
   Onboarding: undefined;
   UserDataCollection: undefined;
   SunCardGeneration: undefined;
@@ -77,12 +75,12 @@ export const Navigation = () => {
         onboardingCompleted ? (
           // Main app screens when authenticated and onboarding completed
           <Stack.Navigator
-            initialRouteName="Home"
+            initialRouteName="Tabs"
             screenOptions={{
               headerShown: false,
             }}
           >
-            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Tabs" component={TabNavigator} />
             {/* We'll add more screens here as we implement them */}
           </Stack.Navigator>
         ) : (
